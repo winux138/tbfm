@@ -1,6 +1,6 @@
 BasedOnStyle:  GNU
 AlignAfterOpenBracket: AlwaysBreak
-IndentWidth: 8
+IndentWidth: 4
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel: false
