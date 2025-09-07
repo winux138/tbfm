@@ -7,6 +7,7 @@
 
 #include <ncurses.h>
 
+int cursor{ 2 };
 auto path{ std::filesystem::current_path () };
 std::vector<std::filesystem::path> sub_directories{};
 
@@ -30,47 +31,14 @@ get_files (void)
     return files;
 }
 
-bool
-prompt_user_action (void)
+void
+print_direntry (const char *entry_name, const int row)
 {
-
-    printw ("--- actions ---\n");
-    printw ("1. go up a diretory\n");
-    printw ("2. navigate to a directory\n");
-    printw ("3. print the full path of a file and exit\n");
-    printw ("0. exit\n");
-
-    switch (getch () - '0') {
-    case 0:
-        return true;
-    case 1:
-        path = path.parent_path ();
-        break;
-    case 2: {
-        printw ("--- Pick a directory to move to ---");
-        for (auto const [index, sub_directory] :
-             sub_directories | std::views::enumerate
-                 | std::views::transform ([] (auto p) {
-                       return std::pair{ std::get<0> (p) + 1,
-                                         std::get<1> (p) };
-                   }))
-            printw ("%d: %s", index, sub_directory.c_str ());
-
-        unsigned int diretory_to_move_to{};
-        std::cin >> diretory_to_move_to;
-        --diretory_to_move_to;
-        assert (
-            diretory_to_move_to < sub_directories.size ()
-            && "Sub directory index out of range");
-        path = sub_directories[diretory_to_move_to];
-        break;
-    }
-    default:
-        std::cout << "Invalid input" << std::endl;
-        break;
-    }
-
-    return false;
+    if (row == cursor)
+        attron (A_REVERSE);
+    mvprintw (row, 2, "%s", entry_name);
+    if (row == cursor)
+        attroff (A_REVERSE);
 }
 
 int
@@ -82,7 +50,15 @@ main (int argc, char **argv)
     int ch{ 0 };
     initscr ();
     raw ();
-    noecho ();
+    // noecho ();
+
+    assert (
+        has_colors () && start_color () == OK && "Colors are not supported");
+    use_default_colors (); // allow -1 background
+    // pair id, foreground, background (-1 = default)
+    init_pair (1, COLOR_BLUE, -1);
+
+    curs_set (0);
 
     bool should_exit{ false };
     while (!should_exit) {
@@ -92,19 +68,30 @@ main (int argc, char **argv)
         // TODO: Header bar with info
         // TODO: Footer bar with keymaps
 
+        int row{ 2 };
         printw ("%s:\n", path.c_str ());
 
-        // TODO color on
+        attron (COLOR_PAIR (1));
+        print_direntry ("..", row++);
         for (const auto &subdirectory : get_subdirectories ())
-            printw ("  %s\n", subdirectory.filename ().c_str ());
-        // TODO color off
-        for (const auto &file : get_files ())
-            printw ("  %s\n", file.filename ().c_str ());
+            print_direntry (subdirectory.filename ().c_str (), row++);
+        attroff (COLOR_PAIR (1));
 
-        // should_exit = prompt_user_action ();
+        for (const auto &file : get_files ())
+            print_direntry (file.filename ().c_str (), row++);
+
         refresh ();
-        getch ();
-        break;
+        switch (getch ()) {
+        case 'k':
+            --cursor;
+            break;
+        case 'j':
+            ++cursor;
+            break;
+        case 'q':
+            should_exit = true;
+            break;
+        }
     }
 
     endwin ();
