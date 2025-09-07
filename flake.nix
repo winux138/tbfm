@@ -17,15 +17,20 @@
           inherit system;
         };
       in {
+        stdenv = pkgs.clangStdenv;
         devShells.default = with pkgs;
           mkShell {
             nativeBuildInputs = [
               clang_21
+              ncurses
               cmake
               ninja
             ];
 
-            shellHook = '''';
+            shellHook = ''
+              export CC=clang
+              export CXX=clang++
+            '';
           };
       }
     );
