@@ -7,10 +7,7 @@
 
 #include <ncurses.h>
 
-// NOTE: ju Here we take the `.parent_path()` because the path is "/x/y/z/."
-// hence going up a directory leads to "/x/y/z" (which is the same directory)
-auto path
-    = std::filesystem::absolute (std::filesystem::path{ "." }).parent_path ();
+auto path{ std::filesystem::current_path () };
 std::vector<std::filesystem::path> sub_directories{};
 
 void
