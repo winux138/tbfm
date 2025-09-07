@@ -47,10 +47,9 @@ main (int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    int ch{ 0 };
     initscr ();
     raw ();
-    // noecho ();
+    noecho ();
 
     assert (
         has_colors () && start_color () == OK && "Colors are not supported");
@@ -65,7 +64,6 @@ main (int argc, char **argv)
         clear ();
         printw ("Welcome to TBFM!\n");
 
-        // TODO: Header bar with info
         // TODO: Footer bar with keymaps
 
         int row{ 2 };
