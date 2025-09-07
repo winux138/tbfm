@@ -1,0 +1,5 @@
+CompileFlags:
+  Add: [-xc++, -Weverything, -Wno-missing-prototypes, -Wno-c++98-compat]
+  Remove: []
+  Compiler: clang++
+  CompilationDatabase: build
