@@ -10,53 +10,51 @@
 auto path{ std::filesystem::current_path () };
 std::vector<std::filesystem::path> sub_directories{};
 
-void
-print_directory (void)
+std::vector<std::filesystem::path>
+get_subdirectories (void)
 {
-    std::cout << std::endl;
-    std::cout << "--- files ---" << std::endl;
-
-    sub_directories.clear ();
+    std::vector<std::filesystem::path> subdirectories{};
     for (const auto &file : std::filesystem::directory_iterator (path))
-        if (file.is_directory ()) {
-            sub_directories.push_back (file.path ());
-            std::cout << "dir:  " << file << std::endl;
-        }
-    for (auto &file : std::filesystem::directory_iterator (path))
+        if (file.is_directory ())
+            subdirectories.push_back (file.path ());
+    return subdirectories;
+}
+
+std::vector<std::filesystem::path>
+get_files (void)
+{
+    std::vector<std::filesystem::path> files{};
+    for (const auto &file : std::filesystem::directory_iterator (path))
         if (file.is_regular_file ())
-            std::cout << "file: " << file << std::endl;
+            files.push_back (file.path ());
+    return files;
 }
 
 bool
 prompt_user_action (void)
 {
-    std::cout << std::endl;
-    std::cout << "--- actions ---" << std::endl;
-    std::cout << "1. go up a diretory" << std::endl;
-    std::cout << "2. navigate to a directory" << std::endl;
-    std::cout << "3. print the full path of a file and exit" << std::endl;
-    std::cout << "0. exit" << std::endl;
 
-    // Prompt for action
-    int raw_action{ false };
-    std::cin >> raw_action;
+    printw ("--- actions ---\n");
+    printw ("1. go up a diretory\n");
+    printw ("2. navigate to a directory\n");
+    printw ("3. print the full path of a file and exit\n");
+    printw ("0. exit\n");
 
-    switch (raw_action) {
+    switch (getch () - '0') {
     case 0:
         return true;
     case 1:
         path = path.parent_path ();
         break;
     case 2: {
-        std::cout << std::endl;
-        std::cout << "--- Pick a directory to move to ---" << std::endl;
+        printw ("--- Pick a directory to move to ---");
         for (auto const [index, sub_directory] :
              sub_directories | std::views::enumerate
                  | std::views::transform ([] (auto p) {
                        return std::pair{ std::get<0> (p) + 1,
                                          std::get<1> (p) };
                    }))
-            std::cout << index << ": " << sub_directory << std::endl;
+            printw ("%d: %s", index, sub_directory.c_str ());
 
         unsigned int diretory_to_move_to{};
         std::cin >> diretory_to_move_to;
@@ -82,37 +80,34 @@ main (int argc, char **argv)
     (void)argv;
 
     int ch{ 0 };
-    initscr ();            /* Start curses mode       */
-    raw ();                /* Line buffering disabled */
-    keypad (stdscr, TRUE); /* We get F1, F2 etc..    */
-    noecho ();             /* Don't echo() while we do getch */
+    initscr ();
+    raw ();
+    noecho ();
 
-    printw ("Type any character to see it in bold\n");
-    ch = getch ();                 /* If raw() hadn't been called
-                                    * we have to press enter before it
-                                    * gets to the program     */
-    if (ch == KEY_F (1))           /* Without keypad enabled this will */
-        printw ("F1 Key pressed"); /*  not get to us either  */
-    /* Without noecho() some ugly escape charachters might have been printed on
-     * screen*/
-    else {
-        printw ("The pressed key is ");
-        attron (A_BOLD);
-        printw ("%c", ch);
-        attroff (A_BOLD);
+    bool should_exit{ false };
+    while (!should_exit) {
+        clear ();
+        printw ("Welcome to TBFM!\n");
+
+        // TODO: Header bar with info
+        // TODO: Footer bar with keymaps
+
+        printw ("%s:\n", path.c_str ());
+
+        // TODO color on
+        for (const auto &subdirectory : get_subdirectories ())
+            printw ("  %s\n", subdirectory.filename ().c_str ());
+        // TODO color off
+        for (const auto &file : get_files ())
+            printw ("  %s\n", file.filename ().c_str ());
+
+        // should_exit = prompt_user_action ();
+        refresh ();
+        getch ();
+        break;
     }
-    refresh (); /* Print it on to the real screen */
-    getch ();   /* Wait for user input */
-    endwin ();  /* End curses mode      */
 
-    // std::cout << "Welcome to TBFM!" << std::endl;
-
-    // bool should_exit{ false };
-    // while (!should_exit) {
-
-    //     print_directory ();
-    //     should_exit = prompt_user_action ();
-    // }
+    endwin ();
 
     return 0;
 }
