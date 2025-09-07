@@ -15,4 +15,9 @@ set(SOURCES
 
 add_executable(tbfm ${SOURCES})
 
+find_package(Curses REQUIRED)
+
+target_include_directories(tbfm PRIVATE ${CURSES_INCLUDE_DIR})
+target_link_libraries(tbfm PRIVATE ${CURSES_LIBRARIES})
+
 # target_include_directories(tbfm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
